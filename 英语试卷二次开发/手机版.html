@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语试卷二次开发工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #4299e1 0%, #2c5282 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 22px; margin-bottom: 5px; }
+        .main { padding: 20px; }
+        .upload-area { border: 3px dashed #4299e1; border-radius: 15px; padding: 30px; text-align: center; margin: 15px 0; }
+        .upload-icon { font-size: 50px; }
+        .upload-btn { display: inline-block; padding: 15px 35px; background: #4299e1; color: white; border-radius: 25px; margin-top: 15px; cursor: pointer; }
+        .result { display: none; margin-top: 20px; }
+        .result.show { display: block; }
+        .tab-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 15px 0; }
+        .tab-btn { padding: 10px 15px; background: #edf2f7; border: none; border-radius: 8px; cursor: pointer; flex: 1; text-align: center; min-width: 70px; }
+        .tab-btn.active { background: #4299e1; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .exercise-box { background: #f7fafc; padding: 15px; border-radius: 10px; margin: 10px 0; }
+        .exercise-box h3 { color: #2c5282; margin-bottom: 10px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        th { background: #edf2f7; }
+        .blank { border: none; border-bottom: 2px solid #cbd5e0; background: transparent; width: 80px; text-align: center; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .word-bank span { padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 15px; font-size: 12px; }
+        .writing-area { width: 100%; min-height: 100px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
+        .info { background: #c6f6d5; color: #22543d; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 英语试卷二次开发</h1>
+            <p>手机也能用</p>
+        </div>
+        <div class="main">
+            <div class="info">
+                <strong>使用说明：</strong>点击下方按钮上传PDF试卷，系统会自动生成练习
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
+                <div class="upload-icon">📄</div>
+                <p>点击上传PDF试卷</p>
+                <label class="upload-btn">
+                    📂 选择文件
+                    <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handleUpload(this)">
+                </label>
+            </div>
+            
+            <div class="result" id="result">
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="showTab('vocab')">词汇</button>
+                    <button class="tab-btn" onclick="showTab('wordform')">变形</button>
+                    <button class="tab-btn" onclick="showTab('phrase')">翻译</button>
+                    <button class="tab-btn" onclick="showTab('cloze')">填词</button>
+                    <button class="tab-btn" onclick="showTab('writing')">写作</button>
+                </div>
+                
+                <div id="vocabTab" class="tab-content active">
+                    <div class="exercise-box">
+                        <h3>📚 话题词汇（英译中）</h3>
+                        <table>
+                            <tr><th>类别</th><th>词汇</th><th>译义</th></tr>
+                            <tr><td>动作引擎</td><td>ensure, prove, meet</td><td><input class="blank"></td></tr>
+                            <tr><td>语义支柱</td><td>safety, standard</td><td><input class="blank"></td></tr>
+                            <tr><td>修饰词</td><td>informed, relevant</td><td><input class="blank"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="wordformTab" class="tab-content">
+                    <div class="exercise-box">
+                        <h3>✏️ 词性变形</h3>
+                        <p>ensure → <input class="blank"> (n.)</p>
+                        <p>prove → <input class="blank"> (n.)</p>
+                        <p>complete → <input class="blank"> (adv.)</p>
+                    </div>
+                </div>
+                
+                <div id="phraseTab" class="tab-content">
+                    <div class="exercise-box">
+                        <h3>🔄 短语翻译</h3>
+                        <table>
+                            <tr><th>中文</th><th>英文</th></tr>
+                            <tr><td>帮助消费者做出知情选择</td><td><input class="blank"></td></tr>
+                            <tr><td>符合相关标准</td><td><input class="blank"></td></tr>
+                            <tr><td>不仅...而且...</td><td><input class="blank"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="clozeTab" class="tab-content">
+                    <div class="exercise-box">
+                        <h3>📝 语境填词</h3>
+                        <div class="word-bank">
+                            <span>ensure</span><span>prove</span><span>inform</span><span>meet</span>
+                        </div>
+                        <p>1. Product labels help consumers make ________ choices.</p>
+                        <p>2. The "CE" mark ________ that the product meets standards.</p>
+                    </div>
+                </div>
+                
+                <div id="writingTab" class="tab-content">
+                    <div class="exercise-box">
+                        <h3>✍️ 微写作（50词）</h3>
+                        <p><strong>情境：</strong>关于人生成长的写作</p>
+                        <p><strong>开头：</strong>On my thirtieth birthday...</p>
+                        <textarea class="writing-area" placeholder="请在此写作..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function handleUpload(input) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                alert('已选择: ' + fileName + '\n\n模拟处理中...\n\n（实际需要服务器处理PDF）');
+                document.getElementById('result').classList.add('show');
+            }
+        }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
