@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语试卷二次开发智能工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Microsoft YaHei", "SimSun", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4299e1 0%, #2c5282 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        /* 上传区域 - 醒目显示 */
+        .upload-area {
+            padding: 60px 40px;
+            text-align: center;
+            background: #f7fafc;
+            margin: 30px;
+            border-radius: 20px;
+            border: 3px dashed #4299e1;
+        }
+        .upload-area:hover {
+            background: #ebf8ff;
+            border-color: #2b6cb0;
+        }
+        .upload-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .upload-title {
+            font-size: 24px;
+            color: #2c5282;
+            margin-bottom: 15px;
+        }
+        .upload-desc {
+            color: #718096;
+            margin-bottom: 25px;
+        }
+        
+        /* 文件输入框 */
+        #pdfInput {
+            display: none;
+        }
+        
+        .upload-button {
+            display: inline-block;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #4299e1 0%, #2c5282 100%);
+            color: white;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
+        }
+        .upload-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(66, 153, 225, 0.5);
+        }
+        
+        /* 显示文件名 */
+        .file-name {
+            display: none;
+            margin-top: 20px;
+            padding: 15px 25px;
+            background: #c6f6d5;
+            color: #22543d;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .file-name.show {
+            display: inline-block;
+        }
+        
+        /* 处理中 */
+        .processing {
+            display: none;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .processing.show {
+            display: block;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .processing h2 {
+            color: #2c5282;
+            margin: 20px 0 10px;
+        }
+        
+        /* 结果区域 */
+        .result {
+            display: none;
+            padding: 20px;
+        }
+        .result.show {
+            display: block;
+        }
+        
+        /* 标签导航 */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            background: #f7fafc;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover {
+            background: #ebf8ff;
+            border-color: #4299e1;
+        }
+        .tab-btn.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+        
+        /* 内容区域 */
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 练习框 */
+        .exercise-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .exercise-box h2 {
+            color: #2c5282;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #4299e1;
+        }
+        .exercise-box h3 {
+            color: #4a5568;
+            margin: 20px 0 15px;
+            font-size: 16px;
+        }
+        
+        /* 表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #edf2f7;
+            color: #2c5282;
+        }
+        
+        /* 填空 */
+        .blank {
+            border: none;
+            border-bottom: 2px solid #cbd5e0;
+            background: transparent;
+            padding: 5px 10px;
+            width: 120px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .blank:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        /* 词库 */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .word-bank span {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .word-bank span:hover {
+            background: #4299e1;
+            color: white;
+        }
+        
+        /* 写作区 */
+        .writing-area {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-top: 15px;
+        }
+        .writing-area:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .toolbar button {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .toolbar button:hover {
+            background: #4299e1;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 英语试卷二次开发智能工具</h1>
+            <p>上传PDF试卷 → 自动生成深度学习练习</p>
+        </div>
+        
+        <!-- ============ 上传区域 ============ -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">点击下方按钮选择PDF试卷文件</div>
+            <div class="upload-desc">支持高考英语试卷PDF文件上传</div>
+            
+            <label for="pdfInput" class="upload-button">
+                📂 选择PDF文件
+            </label>
+            <input type="file" id="pdfInput" accept=".pdf" onchange="handleUpload(this)">
+            
+            <div class="file-name" id="fileName"></div>
+        </div>
+        
+        <!-- ============ 处理中 ============ -->
+        <div class="processing" id="processing">
+            <div class="spinner"></div>
+            <h2>🔍 正在智能分析试卷...</h2>
+            <p>正在提取文章内容、识别题型、生成练习</p>
+        </div>
+        
+        <!-- ============ 结果区域 ============ -->
+        <div class="result" id="result">
+            <!-- 顶部工具栏 -->
+            <div class="toolbar">
+                <button onclick="window.print()">🖨️ 打印练习</button>
+                <button onclick="location.reload()">🔄 重新上传</button>
+            </div>
+            
+            <!-- 标签导航 -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="showTab('vocab')">📚 话题词汇</button>
+                <button class="tab-btn" onclick="showTab('wordform')">✏️ 词性变形</button>
+                <button class="tab-btn" onclick="showTab('phrase')">🔄 短语翻译</button>
+                <button class="tab-btn" onclick="showTab('cloze')">📝 语境填词</button>
+                <button class="tab-btn" onclick="showTab('discourse')">📊 语篇结构</button>
+                <button class="tab-btn" onclick="showTab('writing')">✍️ 微写作</button>
+            </div>
+            
+            <!-- 话题词汇 -->
+            <div id="vocabTab" class="tab-content active">
+                <div class="exercise-box">
+                    <h2>📚 话题词汇（英译中）</h2>
+                    
+                    <h3>阅读B篇 - 人生重塑</h3>
+                    <table>
+                        <tr><th>类别</th><th>词汇</th><th>译义</th></tr>
+                        <tr><td>动作引擎</td><td>chase, reflect, rediscover, slow, clarify, engage</td><td>追逐, 反思, 重新发现, 放慢, 澄清, 参与</td></tr>
+                        <tr><td>语义支柱</td><td>identity, meditation, hobby, companionship, foundation</td><td>身份, 冥想, 爱好, 陪伴, 基金会</td></tr>
+                        <tr><td>修饰词</td><td>private, unexpected, peaceful, charitable, purely</td><td>私人的, 意外的, 平静的, 慈善的, 纯粹地</td></tr>
+                    </table>
+                    
+                    <h3>阅读C篇 - 怀旧情结</h3>
+                    <table>
+                        <tr><th>类别</th><th>词汇</th><th>译义</th></tr>
+                        <tr><td>动作引擎</td><td>idealize, confirm, threaten, romanticize, survive, interpret</td><td>理想化, 确认, 威胁, 浪漫化, 幸存, 解读</td></tr>
+                        <tr><td>语义支柱</td><td>nostalgia, stability, predictability, era, generation</td><td>怀旧, 稳定, 可预测性, 时代, 代</td></tr>
+                        <tr><td>修饰词</td><td>uncontrolled, dangerous, instinctive, progressive, perfect</td><td>不受控制的, 危险的, 本能的, 进步的, 完美的</td></tr>
+                    </table>
+                    
+                    <h3>阅读D篇 - 辣椒与疼痛</h3>
+                    <table>
+                        <tr><th>类别</th><th>词汇</th><th>译义</th></tr>
+                        <tr><td>动作引擎</td><td>perceive, trigger, activate, interpret, adapt, transform</td><td>感知, 触发, 激活, 解读, 适应, 转变</td></tr>
+                        <tr><td>语义支柱</td><td>capsaicin, receptor, nervous system, tolerance, alarm</td><td>辣椒素, 受体, 神经系统, 耐受度, 警报</td></tr>
+                        <tr><td>修饰词</td><td>potentially, benign, instinctive, responsive, overwhelming</td><td>潜在地, 良性的, 本能的, 响应的, 难以承受的</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 词性变形 -->
+            <div id="wordformTab" class="tab-content">
+                <div class="exercise-box">
+                    <h2>✏️ 词性变形练习</h2>
+                    
+                    <h3>动→名</h3>
+                    <p>ensure → <input type="text" class="blank" placeholder="ensurance/proof"> (n.)</p>
+                    <p>prove → <input type="text" class="blank" placeholder="proof"> (n.)</p>
+                    <p>reflect → <input type="text" class="blank" placeholder="reflection"> (n.)</p>
+                    
+                    <h3>名→形</h3>
+                    <p>safety → <input type="text" class="blank" placeholder="safe"> (adj.)</p>
+                    <p>tradition → <input type="text" class="blank" placeholder="traditional"> (adj.)</p>
+                    <p>nature → <input type="text" class="blank" placeholder="natural"> (adj.)</p>
+                    
+                    <h3>副词</h3>
+                    <p>complete → <input type="text" class="blank" placeholder="completely"> (adv.)</p>
+                    <p>true → <input type="text" class="blank" placeholder="truly"> (adv.)</p>
+                    <p>happy → <input type="text" class="blank" placeholder="happily"> (adv.)</p>
+                </div>
+            </div>
+            
+            <!-- 短语翻译 -->
+            <div id="phraseTab" class="tab-content">
+                <div class="exercise-box">
+                    <h2>🔄 短语翻译</h2>
+                    
+                    <h3>英译中</h3>
+                    <table>
+                        <tr><th>英文</th><th>中文</th></tr>
+                        <tr><td>help consumers make informed choices</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                        <tr><td>meet relevant standards</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                        <tr><td>not only...but also...</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                        <tr><td>for pure pleasure, not purpose</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                    </table>
+                    
+                    <h3>中译英</h3>
+                    <table>
+                        <tr><th>中文</th><th>英文</th></tr>
+                        <tr><td>充实的生活</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                        <tr><td>重新审视</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                        <tr><td>通过试错</td><td><input type="text" class="blank" placeholder=""></td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 语境填词 -->
+            <div id="clozeTab" class="tab-content">
+                <div class="exercise-box">
+                    <h2>📝 语境填词（选词填空）</h2>
+                    
+                    <h3>七选五 - 秘密海滩</h3>
+                    <div class="word-bank">
+                        <span>accompany</span>
+                        <span>deserted</span>
+                        <span>mentioned</span>
+                        <span>jogged</span>
+                        <span>frustration</span>
+                        <span>peace</span>
+                        <span>hidden</span>
+                        <span>surprised</span>
+                    </div>
+                    <p the last fifteen minutes>41. For, only a lone goat and a few dancing swallows ________ us.</p>
+                    <p>42. We were in a completely ________ place.</p>
+                    <p>43. Claire had ________ a right turn.</p>
+                    
+                    <h3>完形填空</h3>
+                    <p>56. The salon, 56 ________ (theme) "Shared Beauty, Shared Civilization"...</p>
+                    <p>57. ...demonstrate 57 ________ (art) or cultural achievements.</p>
+                    <p>58. ...shared 58 ________ (pursue) of beauty.</p>
+                </div>
+            </div>
+            
+            <!-- 语篇结构 -->
+            <div id="discourseTab" class="tab-content">
+                <div class="exercise-box">
+                    <h2>📊 语篇结构分析</h2>
+                    
+                    <h3>宏观骨架（段落功能匹配）</h3>
+                    <table>
+                        <tr><th>段落</th><th>功能</th><th>答案</th></tr>
+                        <tr><td>B篇 Para1</td><td>引出问题：50岁的失落感 / 追求新身份但迷失 / 60岁的觉醒 / 升华</td><td><input type="text" class="blank"></td></tr>
+                        <tr><td>B篇 Para2</td><td>引出问题 / 描述困境 / 转折点 / 升华</td><td><input type="text" class="blank"></td></tr>
+                        <tr><td>B篇 Para3</td><td>引出问题 / 描述困境 / 转折点 / 升华</td><td><input type="text" class="blank"></td></tr>
+                    </table>
+                    
+                    <h3>衔接词填空</h3>
+                    <p>1. Product safety is important. ________, labels help consumers make informed choices. <em>(因果)</em></p>
+                    <p><input type="text" class="blank" placeholder="Therefore"></p>
+                    
+                    <p>2. I felt letdown. ________ a successful career, something was missing. <em>(尽管)</em></p>
+                    <p><input type="text" class="blank" placeholder="Despite"></p>
+                    
+                    <p>3. Initially uncomfortable, I learned to listen. ________, I found unexpected companionship. <em>(结果)</em></p>
+                    <p><input type="text" class="blank" placeholder="Eventually"></p>
+                </div>
+            </div>
+            
+            <!-- 微写作 -->
+            <div id="writingTab" class="tab-content">
+                <div class="exercise-box">
+                    <h2>✍️ 微写作练习</h2>
+                    
+                    <h3>阅读B篇 - 人生反思（50词）</h3>
+                    <p><strong>情境：</strong>你刚过完30岁生日，回顾过去一直在忙碌工作。使用With复合结构。</p>
+                    <p><strong>开头：</strong>On my thirtieth birthday, I looked in the mirror and felt...</p>
+                    <textarea class="writing-area" placeholder="请在此写作..."></textarea>
+                    
+                    <h3>阅读C篇 - 观点写作（50词）</h3>
+                    <p><strong>话题：</strong>你是否同意"过去的总是最好的"这一观点？</p>
+                    <textarea class="writing-area" placeholder="请在此写作..."></textarea>
+                    
+                    <h3>续写（150词）</h3>
+                    <p><strong>Paragraph 1:</strong> "Anything I can do for her?" Emily thought to herself.</p>
+                    <p><strong>Paragraph 2:</strong> Two days later, holding a pair of gloves, Emily waited on the road.</p>
+                    <textarea class="writing-area" placeholder="请续写..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function handleUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileName = file.name;
+                
+                // 验证文件类型
+                if (!fileName.toLowerCase().endsWith('.pdf')) {
+                    alert('请选择PDF文件！');
+                    return;
+                }
+                
+                // 显示文件名
+                document.getElementById('fileName').textContent = '✅ 已选择: ' + fileName;
+                document.getElementById('fileName').classList.add('show');
+                
+                // 显示处理中
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('processing').classList.add('show');
+                
+                // 模拟分析（实际需要后端处理PDF）
+                setTimeout(() => {
+                    document.getElementById('processing').classList.remove('show');
+                    document.getElementById('result').classList.add('show');
+                }, 2500);
+            }
+        }
+        
+        function showTab(tabName) {
+            // 隐藏所有tab
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

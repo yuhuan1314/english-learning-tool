@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语试卷二次开发工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Microsoft YaHei", "SimSun", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4299e1 0%, #2c5282 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .main {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+        .section h2 {
+            color: #2c5282;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .file-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-input:hover {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .checkbox-item:hover {
+            background: #ebf8ff;
+        }
+        .checkbox-item input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(72, 187, 120, 0.3);
+        }
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .result {
+            display: none;
+            margin-top: 30px;
+        }
+        .result.show {
+            display: block;
+        }
+        .exercise-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .exercise-box h3 {
+            color: #2c5282;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4299e1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #edf2f7;
+            color: #2c5282;
+        }
+        .input-blank {
+            border: none;
+            border-bottom: 2px solid #cbd5e0;
+            background: transparent;
+            padding: 5px;
+            width: 100px;
+            text-align: center;
+        }
+        .input-blank:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        .writing-area {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .writing-area:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        .word-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .word-option {
+            padding: 8px 15px;
+            background: #edf2f7;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .word-option:hover {
+            background: #4299e1;
+            color: white;
+        }
+        .word-option.selected {
+            background: #48bb78;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            font-size: 12px;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: #edf2f7;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #4299e1;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 英语试卷二次开发工具</h1>
+            <p>基于克拉申输入假说与布鲁姆认知模型</p>
+        </div>
+        
+        <div class="main">
+            <!-- 题材选择 -->
+            <div class="section">
+                <h2>📋 第一步：选择题型</h2>
+                <div class="options">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="reading" checked> 阅读理解
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cloze" checked> 七选五
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="fill" checked> 完形填空
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="grammar" checked> 语法填空
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="writing" checked> 书面表达
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 练习类型 -->
+            <div class="section">
+                <h2>⚙️ 第二步：选择练习类型</h2>
+                <div class="options">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="vocab" checked> 话题词汇
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="wordform" checked> 词性变形
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="phrase" checked> 短语翻译
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cloze-exercise" checked> 语境填词
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="discourse" checked> 语篇结构
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="writing-exercise" checked> 微写作
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 按钮 -->
+            <div style="text-align: center;">
+                <button class="btn" onclick="generateExercises()">🚀 生成练习</button>
+                <button class="btn" onclick="printExercises()">🖨️ 打印/导出PDF</button>
+            </div>
+            
+            <!-- 结果区域 -->
+            <div class="result" id="result">
+                <!-- 阅读理解B篇 -->
+                <div class="exercise-box">
+                    <h3>📖 阅读B篇 - 人生重塑</h3>
+                    
+                    <div id="vocab-section">
+                        <h4>一、话题词汇</h4>
+                        <table>
+                            <tr><th>类别</th><th>词汇</th></tr>
+                            <tr><td>动作引擎</td><td>chase, reflect, rediscover, slow, clarify, engage</td></tr>
+                            <tr><td>语义支柱</td><td>identity, meditation, hobby, companionship, foundation</td></tr>
+                            <tr><td>修饰词</td><td>private, unexpected, peaceful, charitable, purely</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div id="wordform-section">
+                        <h4>二、词性变形</h4>
+                        <p><strong>动→名:</strong> chase→<input type="text" class="input-blank">; reflect→<input type="text" class="input-blank"></p>
+                        <p><strong>名→形:</strong> charity→<input type="text" class="input-blank">; purpose→<input type="text" class="input-blank"></p>
+                        <p><strong>副词:</strong> complete→<input type="text" class="input-blank">; true→<input type="text" class="input-blank"></p>
+                    </div>
+                    
+                    <div id="phrase-section">
+                        <h4>三、短语翻译</h4>
+                        <table>
+                            <tr><th>中文</th><th>英文</th></tr>
+                            <tr><td>不仅...而且...</td><td><input type="text" class="input-blank"></td></tr>
+                            <tr><td>纯粹的乐趣</td><td><input type="text" class="input-blank"></td></tr>
+                            <tr><td>充实的生活</td><td><input type="text" class="input-blank"></td></tr>
+                            <tr><td>重新审视</td><td><input type="text" class="input-blank"></td></tr>
+                        </table>
+                    </div>
+                    
+                    <div id="cloze-exercise-section">
+                        <h4>四、语境填词</h4>
+                        <p><em>从方框中选择正确的单词填空</em></p>
+                        <div class="word-options">
+                            <span class="word-option">chase</span>
+                            <span class="word-option">reflection</span>
+                            <span class="word-option">private</span>
+                            <span class="word-option">unexpected</span>
+                            <span class="word-option">charity</span>
+                            <span class="word-option">purpose</span>
+                        </div>
+                        <p>1. After selling my companies, I finally had time for ________.</p>
+                        <p>2. I was a very ________ person, but I forced myself to sit at the counter.</p>
+                        <p>3. The next decade saw me ________ new identities.</p>
+                    </div>
+                    
+                    <div id="discourse-section">
+                        <h4>五、语篇结构</h4>
+                        <p><strong>宏观骨架（段落功能匹配）</strong></p>
+                        <table>
+                            <tr><th>段落</th><th>功能</th></tr>
+                            <tr><td>Para 1</td><td><input type="text" class="input-blank">（50岁的失落感）</td></tr>
+                            <tr><td>Para 2</td><td><input type="text" class="input-blank">（追求新身份但迷失）</td></tr>
+                            <tr><td>Para 3</td><td><input type="text" class="input-blank">（60岁的觉醒）</td></tr>
+                            <tr><td>Para 4-6</td><td><input type="text" class="input-blank">（三个改变）</td></tr>
+                            <tr><td>Para 7</td><td><input type="text" class="input-blank">（升华）</td></tr>
+                        </table>
+                        <p><strong>衔接词填空</strong></p>
+                        <p>1. I felt letdown. ________ a successful career, something was missing. <em>(尽管/因为/所以)</em></p>
+                        <p>2. Family health issues ________ me off my hamster wheel. <em>(推动/震撼/阻止)</em></p>
+                    </div>
+                    
+                    <div id="writing-exercise-section">
+                        <h4>六、微写作（50词）</h4>
+                        <p><strong>情境：</strong>你刚过完30岁生日，回顾过去一直在忙碌工作。使用With复合结构。</p>
+                        <p><strong>开头：</strong>On my thirtieth birthday, I looked in the mirror and felt...</p>
+                        <textarea class="writing-area" placeholder="请在此处写作..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 完形填空 -->
+                <div class="exercise-box">
+                    <h3>📝 完形填空 - 世界诗歌舞蹈音乐与视觉艺术沙龙</h3>
+                    <div id="cloze-fill-section">
+                        <p><em>用所给词的适当形式填空</em></p>
+                        <p>1. The salon, 56 ________ (theme) "Shared Beauty, Shared Civilization"...</p>
+                        <p>2. ...demonstrate 57 ________ (art) or cultural achievements.</p>
+                        <p>3. The event highlighted humanity's shared 58 ________ (pursue) of beauty.</p>
+                        <p>4. Beauty is not 59 ________ (mere) an aesthetic.</p>
+                        <p>5. It 60 ________ (find) in the meeting point between cultures.</p>
+                    </div>
+                </div>
+                
+                <!-- 语法填空 -->
+                <div class="exercise-box">
+                    <h3>📝 语法填空 - 黎明守护者</h3>
+                    <div id="grammar-section">
+                        <p><strong>语法改错</strong></p>
+                        <p>1. The cold air was already <input type="text" class="input-blank"> make her doubt her choice.</p>
+                        <p>2. No one would come out for a run like <input type="text" class="input-blank">.</p>
+                        
+                        <p><strong>短语翻译</strong></p>
+                        <table>
+                            <tr><th>中文</th><th>英文</th></tr>
+                            <tr><td>推开门</td><td><input type="text" class="input-blank"></td></tr>
+                            <tr><td>一阵风裹挟着...</td><td><input type="text" class="input-blank"></td></tr>
+                            <tr><td>心中涌起深深的敬意</td><td><input type="text" class="input-blank"></td></tr>
+                        </table>
+                        
+                        <p><strong>写作续写（150词）</strong></p>
+                        <p>Paragraph 1: "Anything I can do for her?" Emily thought to herself.</p>
+                        <p>Paragraph 2: Two days later, holding a pair of gloves, Emily waited on the road.</p>
+                        <textarea class="writing-area" placeholder="请续写..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            英语试卷二次开发工具 | 基于克拉申输入假说与布鲁姆认知模型
+        </div>
+    </div>
+    
+    <script>
+        function generateExercises() {
+            document.getElementById('result').classList.add('show');
+            
+            // 显示/隐藏各部分
+            document.getElementById('vocab-section').style.display = 
+                document.getElementById('vocab').checked ? 'block' : 'none';
+            document.getElementById('wordform-section').style.display = 
+                document.getElementById('wordform').checked ? 'block' : 'none';
+            document.getElementById('phrase-section').style.display = 
+                document.getElementById('phrase').checked ? 'block' : 'none';
+            document.getElementById('cloze-exercise-section').style.display = 
+                document.getElementById('cloze-exercise').checked ? 'block' : 'none';
+            document.getElementById('discourse-section').style.display = 
+                document.getElementById('discourse').checked ? 'block' : 'none';
+            document.getElementById('writing-exercise-section').style.display = 
+                document.getElementById('writing-exercise').checked ? 'block' : 'none';
+            
+            // 滚动到结果
+            document.getElementById('result').scrollIntoView({behavior: 'smooth'});
+        }
+        
+        function printExercises() {
+            window.print();
+        }
+        
+        // 单词选项点击效果
+        document.querySelectorAll('.word-option').forEach(option => {
+            option.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+    </script>
+</body>
+</html>
