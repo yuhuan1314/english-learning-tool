@@ -1,4 +1,5 @@
 streamlit
 PyPDF2
-minimax-client
-
+minimax==0.2.10
+python-docx
+pandas
