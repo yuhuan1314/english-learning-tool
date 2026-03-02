@@ -11,7 +11,7 @@ st.caption("手机也能用 | 上传试卷PDF，自动生成三纽扣拆解+专�
 # 配置Minimax（替换成你自己的密钥）
 MINIMAX_GROUP_ID = "2024308105302516508"
 MINIMAX_API_KEY = "sk-cp-3yV1Tg4PVX98E-lu p5R4UShPvzzO0uZNBcXGj SYIJIIFD3fg40LneOSB9KGo TX4EkwYKyPZ9AapQwF991 5SVu65A9OMX5c7ViYo8iy7 pSHAiihLQ8xW73sw"
-MINIMAX_MODEL_ID = "abab6.5s-chat"
+MINIMAX_MODEL_ID = "minimax-2.5"
 
 # 初始化客户端
 @st.cache_resource
