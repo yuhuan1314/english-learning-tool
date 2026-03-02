@@ -9,8 +9,9 @@ st.title("📝 英语试卷二次开发")
 st.caption("手机也能用 | 上传试卷PDF，自动生成三纽扣拆解+专项练习")
 
 # 配置Minimax（替换成你自己的密钥）
-MINIMAX_API_KEY = "sk-cp-3yV1Tg4PVX98E-lu p5R4UShPvzzO0uZNBcXGj SYIJIIFD3fg40LneOSB9KGo TX4EkwYKyPZ9AapQwF991 5SVu65A9OMX5c7ViYo8iy7 pSHAiihLQ8xW73sw"
-MINIMAX_MODEL_ID = "minimax-2.5"
+YOUR_MINIMAX_API_KEY = "sk-cp-3yV1Tg4PVX98E-lu p5R4UShPvzzO0uZNBcXGj SYIJIIFD3fg40LneOSB9KGo TX4EkwYKyPZ9AapQwF991 5SVu65A9OMX5c7ViYo8iy7 pSHAiihLQ8xW73sw"
+YOUR_MINIMAX_GROUP_ID = "2024308105302516508"
+MINIMAX_MODEL_ID = "abab6.5-chat" # 官方标准模型名，不要乱改
 
 # 初始化客户端
 @st.cache_resource
