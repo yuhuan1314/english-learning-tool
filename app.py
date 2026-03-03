@@ -1,118 +1,88 @@
-# 导入依赖（用官方正版SDK，彻底解决版本兼容问题）
 import streamlit as st
+import PyPDF2
 from minimax import MiniMax
+from io import BytesIO
 
-# -------------------------- 【你只需要改这里的3个信息，其他所有代码都不用动】 --------------------------
-YOUR_MINIMAX_API_KEY = "sk-cp-3yV1Tg4PVX98E-lu p5R4UShPvzzO0uZNBcXGj SYIJIIFD3fg40LneOSB9KGo TX4EkwYKyPZ9AapQwF991 5SVu65A9OMX5c7ViYo8iy7 pSHAiihLQ8xW73sw"
-YOUR_MINIMAX_GROUP_ID = "2024308105302516508"
-MINIMAX_MODEL_ID = "abab6.5-chat" # 官方标准模型名，不要乱改
-# -----------------------------------------------------------------------------------------------------
+# 页面基础配置
+st.set_page_config(page_title="英语试卷二次开发", page_icon="📝", layout="wide")
+st.title("📝 英语试卷二次开发")
+st.caption("手机也能用 | 上传试卷PDF，自动生成三纽扣拆解+专项练习")
 
-# Streamlit页面基础配置（和你原来的页面保持一致）
-st.set_page_config(page_title="英语学习工具", page_icon="📚", layout="wide")
-st.title("📚 英语学习工具")
-st.divider()
+# 读取密钥，密钥错误直接提示
+try:
+    YOUR_MINIMAX_API_KEY = "sk-cp-3yV1Tg4PVX98E-lu p5R4UShPvzzO0uZNBcXGj SYIJIIFD3fg40LneOSB9KGo TX4EkwYKyPZ9AapQwF991 5SVu65A9OMX5c7ViYo8iy7 pSHAiihLQ8xW73sw"
+    YOUR_MINIMAX_GROUP_ID = "2024308105302516508"
+    MINIMAX_MODEL_ID = "abab6.5-chat" # 官方标准模型名，不要乱改
+except Exception as e:
+    st.error("请先在Streamlit后台的【Secrets】里，正确配置Minimax的Group ID和API Key")
+    st.stop()
 
-# -------------------------- 【核心修复1：彻底解决group_id初始化报错】 --------------------------
-# 初始化MiniMax客户端（只传api_key，绝对不传group_id，用缓存避免重复初始化）
+# 初始化Minimax客户端
 @st.cache_resource
-def init_minimax_client():
-    try:
-        client = MiniMax(api_key=YOUR_MINIMAX_API_KEY)
-        st.success("✅ 模型客户端初始化成功，无报错")
-        return client
-    except Exception as e:
-        st.error(f"❌ 客户端初始化失败：{e}")
-        st.stop()
+def init_minimax():
+    return MiniMax(api_key=MINIMAX_API_KEY, group_id=MINIMAX_GROUP_ID)
 
-# 全局初始化客户端，整个页面只会执行一次
-minimax_client = init_minimax_client()
+minimax_client = init_minimax()
 
-# -------------------------- 【核心修复2：封装通用调用函数，彻底解决接口解析报错】 --------------------------
-# 三个按钮共用这个函数，不用重复写代码，自带错误捕获+格式校验
-def call_minimax_llm(system_prompt, user_input):
-    # 先校验输入内容不为空
-    if not user_input.strip():
-        st.warning("请先输入要处理的英语内容，再点击按钮！")
-        return None
-    
-    # 标准接口格式，绝对不会出现格式错误
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_input}
-    ]
+# PDF上传模块（增加10MB大小限制，避免大文件卡死）
+uploaded_file = st.file_uploader("上传英语试卷PDF", type="pdf", max_upload_size=10*1024*1024)
 
-    try:
-        # 【核心修复】group_id只在调用接口时传，绝对不在初始化时传
-        response = minimax_client.chat.completions.create(
-            model=MINIMAX_MODEL_ID,
-            group_id=YOUR_MINIMAX_GROUP_ID,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=1024,
-            timeout=30  # 加超时，避免网络问题导致解析崩溃
-        )
-        # 提取返回结果，格式完全匹配官方SDK
-        return response.choices[0].message.content
-    
-    except Exception as e:
-        # 把底层错误直接展示在页面上，不用去终端看
-        st.error(f"❌ 调用模型失败，错误原因：{e}")
-        print("完整报错日志：", e)
-        return None
+# 核心处理逻辑
+if uploaded_file is not None:
+    # 1. 解析PDF文本
+    with st.spinner("正在解析PDF..."):
+        try:
+            pdf_reader = PyPDF2.PdfReader(BytesIO(uploaded_file.read()))
+            paper_text = ""
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    paper_text += page_text
+            if not paper_text.strip():
+                st.error("无法解析PDF内容，请确认是可复制的原生PDF，不是拍照/扫描件")
+                st.stop()
+            st.success("PDF解析完成！正在生成练习...")
+        except Exception as e:
+            st.error(f"PDF解析失败：{str(e)}")
+            st.stop()
 
-# -------------------------- 【这里就是你要的3个按钮，功能完全保留，可一键修改】 --------------------------
-# 输入框（和你原来的逻辑一致，先输入内容，再点按钮）
-user_input = st.text_area(
-    "请输入你要处理的英语内容：",
-    height=150,
-    placeholder="比如：输入英语句子/文章/单词，点击下方对应按钮即可处理"
-)
+    # 2. 调用Minimax生成练习
+    with st.spinner("AI正在生成二次开发练习，请稍候..."):
+        try:
+            prompt = f"""
+            你是高考英语试卷二次开发专家，严格遵循李力老师的【三纽扣还原法】，对上传的高考英语试卷进行二次开发。
+            三纽扣还原法核心定义：
+            1. ⚡引擎纽扣：句子核心谓语动词，排除非谓语干扰
+            2. 🔗关节纽扣：句子连接词/引导词，拆解从句逻辑
+            3. ⚓锚点纽扣：核心介词词块、固定搭配，高考高频考点
 
-# 3个按钮并排布局（和你原来的“三纽扣”完全一致）
-col1, col2, col3 = st.columns(3)
+            请基于下面的试卷内容，生成对应的练习，结构清晰，分模块展示：
+            1. 【核心长难句三纽扣拆解】：提取5句40词以上的长难句，每句都按三纽扣法拆解，标注考点
+            2. 【高频词汇练习】：提取20个试卷高频核心词汇/短语，给出中文释义、考点、例句
+            3. 【词性变形练习】：提取10个核心考点词汇，生成词性变形题，附答案
+            4. 【短语翻译练习】：提取10个试卷高频短语，生成中英互译题，附答案
+            5. 【语境填词练习】：基于试卷核心词汇，生成5道语境填空题，附答案
+            6. 【微写作题目】：基于试卷话题，生成1道50词左右的高考适配微写作题，给情境和开头示例
 
-# 按钮1：默认功能【中英互译】，你可以改成自己原来的功能
-with col1:
-    btn_translate = st.button("🌐 中英互译", type="primary", use_container_width=True)
+            试卷原文内容：
+            {paper_text}
+            """
+            response = minimax_client.chat.completions.create(
+                model=MINIMAX_MODEL_ID,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=4096
+            )
+            result = response.choices[0].message.content
+        except Exception as e:
+            st.error(f"AI生成练习失败：{str(e)}")
+            st.stop()
 
-# 按钮2：默认功能【语法纠错+讲解】，你可以改成自己原来的功能
-with col2:
-    btn_grammar = st.button("📝 语法纠错讲解", type="primary", use_container_width=True)
-
-# 按钮3：默认功能【单词/短语解析】，你可以改成自己原来的功能
-with col3:
-    btn_vocab = st.button("📖 单词短语解析", type="primary", use_container_width=True)
-
-st.divider()
-
-# -------------------------- 3个按钮的点击逻辑，每个对应独立功能 --------------------------
-# 按钮1点击事件：中英互译
-if btn_translate:
-    with st.spinner("正在翻译中..."):
-        # 这里是按钮1对应的prompt，改成你原来的功能逻辑即可
-        system_prompt = "你是一个专业的翻译助手，用户输入中文就翻译成地道英语，输入英语就翻译成通顺中文，只返回翻译结果，不要多余内容。"
-        result = call_minimax_llm(system_prompt, user_input)
-        if result:
-            st.markdown("### 翻译结果：")
-            st.markdown(result)
-
-# 按钮2点击事件：语法纠错+讲解
-if btn_grammar:
-    with st.spinner("正在分析语法中..."):
-        # 这里是按钮2对应的prompt，改成你原来的功能逻辑即可
-        system_prompt = "你是一个专业的英语语法老师，先纠正用户输入英语句子的语法错误，再逐句讲解语法点，用通俗易懂的中文说明，结构清晰。"
-        result = call_minimax_llm(system_prompt, user_input)
-        if result:
-            st.markdown("### 语法纠错&讲解结果：")
-            st.markdown(result)
-
-# 按钮3点击事件：单词/短语解析
-if btn_vocab:
-    with st.spinner("正在解析词汇中..."):
-        # 这里是按钮3对应的prompt，改成你原来的功能逻辑即可
-        system_prompt = "你是一个专业的英语词汇老师，解析用户输入的英语单词/短语，给出音标、词性、中文释义、常见搭配、例句，用中文整理成清晰的结构。"
-        result = call_minimax_llm(system_prompt, user_input)
-        if result:
-            st.markdown("### 词汇解析结果：")
-            st.markdown(result)
+    # 3. 展示结果+下载功能
+    st.markdown(result)
+    st.download_button(
+        label="📥 下载练习内容",
+        data=result,
+        file_name=f"{uploaded_file.name.split('.')[0]}_二次开发练习.txt",
+        mime="text/plain"
+    )
